@@ -9,6 +9,11 @@
 #define PORT_NUM 1234
 #define BAUD_RATE 921600
 
+// pio run -t upload -e esp32_client to upload the client code
+// pio run -t upload -e esp32_server to upload the server code
+// pio device monitor -e esp32_client to monitor the client pings
+// pio device monitor -e esp32_server to monitor the server pings
+
 // #define DEVICE_ROLE_SERVER_IP
 // #define DEVICE_ROLE_CLIENT_IP
 // #define DEVICE_ROLE_SERVER_MAC
