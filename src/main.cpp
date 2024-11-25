@@ -5,14 +5,8 @@
 #define WIFI_SSID "Sahiths iphone" // modify this to the SSID of the base station Wi-Fi network
 #define WIFI_PASS "123456sb" // modify this to the password of the base station Wi-Fi network
 #define SERVER_IP "172.20.10.9" // modify this to the IP address of the server
-#define MAC_ADDRESS "58:CF:79:04:40:10" // modify this to the MAC address of the server
 #define PORT_NUM 1234
 #define BAUD_RATE 921600
-
-// pio run -t upload -e esp32_client to upload the client code
-// pio run -t upload -e esp32_server to upload the server code
-// pio device monitor -e esp32_client to monitor the client pings
-// pio device monitor -e esp32_server to monitor the server pings
 
 // #define DEVICE_ROLE_SERVER_IP
 // #define DEVICE_ROLE_CLIENT_IP
