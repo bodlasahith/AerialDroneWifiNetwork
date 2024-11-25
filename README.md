@@ -5,7 +5,7 @@ This project evaluates network communication between Raspberry Pis and ESP32s mo
 ## Table of Contents
 
 - [Overview](#overview)
-- [Requirements](#setup)
+- [Requirements](#requirements)
   - [Hardware](#hardware)
   - [Software](#software)
 - [Features](#features)
@@ -34,16 +34,15 @@ The results will help assess the feasibility of deploying such systems for exten
 ### Hardware
 
 - Raspberry Pi 4 (or similar)
-- ESP32 microcontrollers
-- Drones capable of carrying the above devices
+- ESP32-C3-DevKitM-1 microcontrollers (or similar)
 - Power sources for Raspberry Pis and ESP32s (e.g., LiPo batteries, power bank)
+- Drones capable of carrying the above devices
 - WiFi hotspot (e.g., a smartphone)
 
 ### Software
 
 - Raspberry Pi OS (64-bit w/ Desktop)
 - `iperf3` for network testing
-- Python for data logging and analysis
 - PlatformIO IDE Extension on VS Code or Arduino IDE for ESP32 programming
 
 ---
