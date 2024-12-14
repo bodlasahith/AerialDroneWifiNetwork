@@ -4,7 +4,7 @@
 
 #define WIFI_SSID "Sahiths iphone" // modify this to the SSID of the base station Wi-Fi network
 #define WIFI_PASS "123456sb" // modify this to the password of the base station Wi-Fi network
-#define SERVER_IP "172.20.10.9" // modify this to the IP address of the server
+#define SERVER_IP "172.20.10.8" // modify this to the IP address of the server
 #define PORT_NUM 1234
 #define BAUD_RATE 115200
 
