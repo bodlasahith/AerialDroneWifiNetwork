@@ -5,7 +5,7 @@ PING_BASE_OUTPUT_FILE="/home/sahithbodla/Documents/ping_base_results.txt"
 DURATION=10 # duration of each test in seconds
 INTERVAL=2 # interval between tests in seconds
 ESP32_LOGGER="/home/sahithbodla/Documents/esp32_logger.py"
-ESP32_OUTPUT_FILE="/home/sahithbodla/Documents/esp32_log.txt"
+ESP32_LOG_FILE="/home/sahithbodla/Documents/esp32_log.txt"
 PING_PI_ADDRESS="172.20.10.7"
 PING_BASE_ADDRESS="172.20.10.6"
 

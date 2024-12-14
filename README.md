@@ -130,7 +130,7 @@ sudo python3 esp32_logger.py
 
 6. **Run `iperf3` and ESP32s automatically on reboot**
 
-- To run the server and client with iperf3 and ESP32s infinitely on pi reboot until user interrupt/shutdown, create a crontab file following the lines in `crontab.txt `.
+- To run the server and client with iperf3 and ESP32s infinitely on pi reboot until user interrupt/shutdown, create a crontab file following the lines in `crontab.txt`.
 
 ### ESP32 Setup
 
