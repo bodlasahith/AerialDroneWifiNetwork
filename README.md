@@ -95,7 +95,7 @@ ssh USERID@<pi-address>
    sudo apt update
    sudo apt install iperf3
    ```
-5. **Run `iperf3`**:
+5. **Run `iperf3` and ESP32s manually**:
 
 - One one pi, start the server:
 
@@ -114,6 +114,23 @@ iperf3 -c <server_ip> -t
 ```
 ./iperf3_loop.sh
 ```
+
+- To log ESP32 ping data to pi local storage, plug in the ESP32s into each pi's USB ports and enable serial port permissions to run `esp32_logger.py`:
+
+```
+sudo usermod -a -G dialout $USER
+sudo chmod 666 /dev/ttyUSB0
+```
+
+- Copy the `esp32_logger.py` file into the respective directory and run it
+
+```
+sudo python3 esp32_logger.py
+```
+
+6. **Run `iperf3` and ESP32s automatically on reboot**
+
+- To run the server and client with iperf3 and ESP32s infinitely on pi reboot until user interrupt/shutdown, create a crontab file following the lines in `crontab.txt `.
 
 ### ESP32 Setup
 
@@ -140,7 +157,7 @@ pio run -t upload -e esp32_server
 pio run -t upload -e esp32_client
 ```
 
-4. **Monitor Communication**: Open the serial monitor to check pings/pongs between the ESPs:
+4. **Monitor Communication**: Open the serial monitor to check pings/pongs between the ESPs and reset the monitor with the RST button:
 
 ```
 pio device monitor -e esp32_server
