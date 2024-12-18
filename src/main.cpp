@@ -1,12 +1,15 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <SPIFFS.h>
 #include <esp_now.h>
 
 #define WIFI_SSID "Sahiths iphone" // modify this to the SSID of the base station Wi-Fi network
-#define WIFI_PASS "123456sb" // modify this to the password of the base station Wi-Fi network
-#define SERVER_IP "172.20.10.8" // modify this to the IP address of the server
+#define WIFI_PASS "123456sb"       // modify this to the password of the base station Wi-Fi network
+#define SERVER_IP "172.20.10.8"    // modify this to the IP address of the server
 #define PORT_NUM 1234
 #define BAUD_RATE 115200
+#define FILE_PATH "/src/large.txt"
+#define CHUNK_SIZE 250
 
 // #define DEVICE_ROLE_SERVER_IP
 // #define DEVICE_ROLE_CLIENT_IP
@@ -104,22 +107,72 @@ void loop() {
 
 #ifdef DEVICE_ROLE_SERVER_MAC
 
+uint8_t peer_mac_addr[] = {0x58, 0xCF, 0x79, 0x04, 0x40, 0x10};
+
 // Callback when data is received
 void onReceive(const uint8_t *mac_addr, const uint8_t *data, int len) {
-  char incomingData[32]; // Adjust size based on expected message length
-  memcpy(incomingData, data, len);
-  incomingData[len] = '\0';
+  static File file;
+  static bool receivingFile = false;
 
-  Serial.print("Received message: ");
-  Serial.println(incomingData);
+  if (strncmp((char *)data, "START", len) == 0) {
+    // Start receiving file
+    file = SPIFFS.open(FILE_PATH, FILE_WRITE);
+    receivingFile = true;
+    Serial.println("Receiving file...");
+  } else if (strncmp((char *)data, "END", len) == 0) {
+    // End of file
+    file.close();
+    receivingFile = false;
+    Serial.println("File received.");
+  } else if (receivingFile)
+  {
+    // Write chunk to file
+    file.write(data, len);
 
-  // Respond with "Pong"
-  const char *response = "Pong";
-  esp_now_send(mac_addr, (uint8_t *)response, strlen(response));
+    // Print received chunk as hexadecimal string
+    Serial.print("Received chunk: ");
+    for (int i = 0; i < len; i++) {
+      Serial.printf("%02X ", data[i]);
+    }
+    Serial.println();
+  }
+}
+
+void sendFile(const uint8_t *mac_addr) {
+  File file = SPIFFS.open(FILE_PATH, FILE_READ);
+  if (!file) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+
+  // Send start signal
+  const char *startSignal = "START";
+  esp_now_send(mac_addr, (uint8_t *)startSignal, strlen(startSignal));
+
+  // Send file in chunks
+  uint8_t buffer[CHUNK_SIZE];
+  while (file.available()) {
+    int bytesRead = file.read(buffer, CHUNK_SIZE);
+    esp_now_send(mac_addr, buffer, bytesRead);
+    delay(10); // Small delay to ensure reliable transmission
+  }
+
+  // Send end signal
+  const char *endSignal = "END";
+  esp_now_send(mac_addr, (uint8_t *)endSignal, strlen(endSignal));
+
+  file.close();
+  Serial.println("File sent.");
 }
 
 void setup() {
   Serial.begin(BAUD_RATE);
+
+  // Initialize SPIFFS
+  if (!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
 
   // Initialize WiFi in STA mode
   WiFi.mode(WIFI_STA);
@@ -130,31 +183,95 @@ void setup() {
     return;
   }
   Serial.println("ESP-NOW Initialized");
-  Serial.println("MAC Address: " + WiFi.macAddress());
-
-  // Register callback
+  // Register receive callback
   esp_now_register_recv_cb(onReceive);
+
+  // Add peer (replace with actual MAC address)
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, peer_mac_addr, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("Failed to add peer");
+    return;
+  }
+
+  // Send file to peer
+  sendFile(peerInfo.peer_addr);
 }
 
 void loop() {
-    // Nothing to do here; communication happens in the callback
+  // put your main code here, to run repeatedly:
+  sendFile(peer_mac_addr);
+  delay(10000); // 10 seconds delay
 }
 
 #endif
 
 #ifdef DEVICE_ROLE_CLIENT_MAC
 
-// Receiver's MAC Address
-uint8_t receiverMAC[] = {0x58, 0xCF, 0x79, 0x04, 0x3E, 0x9C}; // Replace with the receiver's MAC address
+uint8_t peer_mac_addr[] = {0x58, 0xCF, 0x79, 0x04, 0x3E, 0x9C};
 
-// Callback when message is sent
-void onSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  Serial.print("Message Sent Status: ");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
+// Callback when data is received
+void onReceive(const uint8_t *mac_addr, const uint8_t *data, int len) {
+  static File file;
+  static bool receivingFile = false;
+
+  if (strncmp((char *)data, "START", len) == 0) {
+    // Start receiving file
+    file = SPIFFS.open(FILE_PATH, FILE_WRITE);
+    receivingFile = true;
+    Serial.println("Receiving file...");
+  } else if (strncmp((char *)data, "END", len) == 0) {
+    // End of file
+    file.close();
+    receivingFile = false;
+    Serial.println("File received.");
+  } else if (receivingFile) {
+    // Write chunk to file
+    file.write(data, len);
+    Serial.print("Received chunk: ");
+    Serial.write(data, len);
+    Serial.println();
+  }
+}
+
+void sendFile(const uint8_t *mac_addr) {
+  File file = SPIFFS.open(FILE_PATH, FILE_READ);
+  if (!file) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+
+  // Send start signal
+  const char *startSignal = "START";
+  esp_now_send(mac_addr, (uint8_t *)startSignal, strlen(startSignal));
+
+  // Send file in chunks
+  uint8_t buffer[CHUNK_SIZE];
+  while (file.available()) {
+    int bytesRead = file.read(buffer, CHUNK_SIZE);
+    esp_now_send(mac_addr, buffer, bytesRead);
+    delay(10); // Small delay to ensure reliable transmission
+  }
+
+  // Send end signal
+  const char *endSignal = "END";
+  esp_now_send(mac_addr, (uint8_t *)endSignal, strlen(endSignal));
+
+  file.close();
+  Serial.println("File sent.");
 }
 
 void setup() {
   Serial.begin(BAUD_RATE);
+
+  // Initialize SPIFFS
+  if (!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
 
   // Initialize WiFi in STA mode
   WiFi.mode(WIFI_STA);
@@ -164,30 +281,31 @@ void setup() {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
+  Serial.println("ESP-NOW Initialized");
 
-  // Register callback
-  esp_now_register_send_cb(onSent);
+  // Register receive callback
+  esp_now_register_recv_cb(onReceive);
 
   // Add peer
-  esp_now_peer_info_t peerInfo;
-  memcpy(peerInfo.peer_addr, receiverMAC, 6);
-  peerInfo.channel = 0;  
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, peer_mac_addr, 6);
+  peerInfo.channel = 0;
   peerInfo.encrypt = false;
 
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
     Serial.println("Failed to add peer");
     return;
   }
+
+  // Send file to peer
+  sendFile(peerInfo.peer_addr);
 }
 
 void loop() {
-  // Send "Ping" to the receiver
-  const char *message = "Ping";
-  esp_err_t result = esp_now_send(receiverMAC, (uint8_t *)message, strlen(message));
-
-  Serial.println(result == ESP_OK ? "Ping sent" : "Ping failed");
-
-  delay(1000); // Send a ping every second
+  // put your main code here, to run repeatedly:
+  // Send file to peer repeatedly every 10 seconds
+  sendFile(peer_mac_addr);
+  delay(10000); // 10 seconds delay
 }
 
 #endif
