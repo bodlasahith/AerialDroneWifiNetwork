@@ -8,7 +8,7 @@
 #define SERVER_IP "172.20.10.8"    // modify this to the IP address of the server
 #define PORT_NUM 1234
 #define BAUD_RATE 115200
-#define FILE_PATH "/src/large.txt"
+#define FILE_PATH "/src/10mb_file"
 #define CHUNK_SIZE 250
 
 // #define DEVICE_ROLE_SERVER_IP
@@ -162,7 +162,7 @@ void sendFile(const uint8_t *mac_addr) {
   esp_now_send(mac_addr, (uint8_t *)endSignal, strlen(endSignal));
 
   file.close();
-  Serial.println("File sent.");
+  Serial.println("File sent from server.");
 }
 
 void setup() {
@@ -204,6 +204,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   sendFile(peer_mac_addr);
+  Serial.println("10s Delaying...");
   delay(10000); // 10 seconds delay
 }
 
@@ -261,7 +262,7 @@ void sendFile(const uint8_t *mac_addr) {
   esp_now_send(mac_addr, (uint8_t *)endSignal, strlen(endSignal));
 
   file.close();
-  Serial.println("File sent.");
+  Serial.println("File sent from client.");
 }
 
 void setup() {
@@ -305,6 +306,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   // Send file to peer repeatedly every 10 seconds
   sendFile(peer_mac_addr);
+  Serial.println("10s Delaying...");
   delay(10000); // 10 seconds delay
 }
 
